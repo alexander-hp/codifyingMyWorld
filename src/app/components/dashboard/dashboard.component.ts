@@ -1,104 +1,111 @@
-import { Component, OnInit } from '@angular/core';
+import {
+  Component,
+  OnDestroy,
+  OnInit,
+  HostListener,
+  Renderer2,
+  ViewChild,
+  ElementRef,
+} from '@angular/core';
 
+declare let $: any;
+
+// ?Listeners y decoradores
 @Component({
   selector: 'app-dashboard',
   templateUrl: './dashboard.component.html',
   styleUrls: ['./dashboard.component.css'],
 })
-export class DashboardComponent implements OnInit {
-  constructor() {
-    let enumeracion: Array<number> = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+@HostListener('document:mousemove', [`$event`])
+export class DashboardComponent implements OnInit, OnDestroy {
+  @ViewChild('myModal') myModal: ElementRef;
+  idTimeOut;
+  checador;
+  saliendo: boolean = false;
+  progressValue: number;
+  idSetInterval;
+  globalListenFunc: Function;
+  listeningMouse: boolean;
 
-    // ?Asignacion de variables
-    console.groupCollapsed('Asignacion de valores');
-    const [cero, uno, , , cuatro, ...restoNumeros] = enumeracion;
-    console.log(cero);
-    console.log(uno);
-    console.log(cuatro);
-    console.log(restoNumeros);
-    console.groupEnd();
+  constructor(private renderer: Renderer2) {
+    let posicionX, nuevaPoscX, posicionY, nuevaPoscY;
 
-    // ?Asignacion separada de la declaracion
-    let once, doce;
-    [once, doce] = [11, 12];
-    console.groupCollapsed('Asignacion separada de la declaracion');
-    console.log(once, doce);
-    console.groupEnd();
+    // ?Escuchando movimiento de mouse
+    this.globalListenFunc = this.renderer.listen(
+      'document',
+      'mousemove',
+      (e: MouseEvent) => {
+        this.listeningMouse = true;
+        nuevaPoscX = e.clientX;
+        nuevaPoscY = e.clientY;
+        console.log(
+          'Nueva Posicion {X: ' + nuevaPoscX + ', Y: ' + nuevaPoscY + '}'
+        );
 
-    // ? Valores por default
-    let veintiuno, veintidos, diez;
-    [veintiuno = 10, veintidos = 11, diez = 0] = [21, 22, 10];
-    console.groupCollapsed('Valores por default');
-    console.log(veintiuno, veintidos, diez);
-    console.groupEnd();
+        if (
+          this.listeningMouse === true &&
+          (nuevaPoscX !== posicionX || nuevaPoscY !== posicionY)
+        ) {
+          clearTimeout(this.checador);
+          this.checador = setTimeout(() => {
+            console.log('Mouse inactivo');
+            if (this.saliendo == false) {
+              this.decrementando();
+            }
+          }, 2000);
+        }
 
-    // ?Cambios de variable
-    console.groupCollapsed('Cambio de variable');
-    let a = 1,
-      b = 2;
-    console.log(`a = ${a}, b = ${b}`);
-    [a, b] = [b, a];
-    console.log(`a = ${a}, b = ${b}`);
+        posicionX = e.clientX;
+        posicionY = e.clientY;
 
-    console.groupEnd();
-
-    // ? Arreglo en arreglo
-    console.groupCollapsed('Arreglo en arreglo');
-    const ejemploArreglo = [
-      1,
-      2,
-      3,
-      [3.5, 3.6, 3.7, 3.8],
-      4,
-      [4.1, [4.11, 4.12]],
-    ];
-    console.groupCollapsed('Valor ejemplo arreglo');
-    console.table(ejemploArreglo);
-    console.groupEnd();
-
-    console.groupCollapsed('Tres decimal');
-    let [tresDecimal] = [ejemploArreglo[3]];
-    console.table(tresDecimal);
-    console.groupEnd();
-
-    console.groupCollapsed('Cuatro decimal');
-    let [cuatroDecimal] = [ejemploArreglo[5]];
-    console.table(cuatroDecimal);
-    console.groupEnd();
-
-    console.groupCollapsed('Cuatro Centecimos');
-    let [cuatroCentecimos] = [ejemploArreglo[5][1]];
-    let [cuatroCentecimos1] = [cuatroDecimal[1]];
-    console.table(cuatroCentecimos);
-    console.table(cuatroCentecimos1);
-    console.groupEnd();
-
-    console.groupEnd();
-
-    // ?Arreglo con objeto
-    console.groupCollapsed('Arreglo con objeto');
-    let arregloyObjeto = [
-      0,
-      1,
-      {
-        nombre: 'Codifying my world',
-        rol: 'developer',
-        aplicacion: 'Tiktok',
-        videos: 5,
-      },
-    ];
-    console.table(arregloyObjeto);
-    let [valorObjeto] = [arregloyObjeto[2]];
-    console.log(valorObjeto['aplicacion']);
-
-    let objeto = new Object({
-      llave: true,
-      objetivo: 'Dar un ejemplo',
-      funciona: true,
-    });
-    console.log(objeto['llave']);
-    console.groupEnd();
+        // console.log( 'Antigua Posicion {X: ' + posicionX + ', Y: ' + posicionY + '}');
+      }
+    );
   }
 
-  ngOnInit(): void {}
+  ngOnInit(): void {
+    // TODO Ejemplo de SetTimeoutConteo
+    // this.conteo();
+  }
+
+  reiniciandoConteo(): any {
+    console.log('Reiniciando Conteo');
+    clearTimeout(this.idTimeOut);
+    this.conteo();
+  }
+
+  conteo() {
+    this.idTimeOut = setTimeout(() => {
+      console.log('Se acabo el tiempo');
+    }, 3000);
+  }
+
+  decrementando() {
+    this.saliendo = true;
+    this.progressValue = 100;
+    $(this.myModal.nativeElement).modal('show');
+    this.idSetInterval = setInterval(() => {
+      this.progressValue = this.progressValue - 10;
+      if (this.progressValue <= 0) {
+        clearInterval(this.idSetInterval);
+        $(this.myModal.nativeElement).modal('hide');
+        this.progressValue = 0;
+        alert('Ya se salio');
+      }
+    }, 1000);
+  }
+
+  mantenerSesion() {
+    clearInterval(this.idSetInterval);
+    this.saliendo = false;
+    $(this.myModal.nativeElement).modal('hide');
+  }
+
+  ngOnDestroy(): void {
+    this.listeningMouse = false;
+    clearInterval(this.idSetInterval);
+    clearInterval(this.idTimeOut);
+    clearTimeout(this.checador);
+    this.globalListenFunc();
+  }
 }

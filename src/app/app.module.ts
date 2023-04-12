@@ -9,6 +9,7 @@ import { DashboardComponent } from './components/dashboard/dashboard.component';
 import { APP_ROUTING } from './app.routes';
 import { PromiseComponent } from './components/promise/promise.component';
 import { DomComponent } from './components/dom/dom.component';
+import { DesestructuracionComponent } from './components/desestructuracion/desestructuracion.component';
 
 @NgModule({
   declarations: [
@@ -18,6 +19,7 @@ import { DomComponent } from './components/dom/dom.component';
     DashboardComponent,
     PromiseComponent,
     DomComponent,
+    DesestructuracionComponent,
   ],
   imports: [BrowserModule, AppRoutingModule, APP_ROUTING],
   providers: [],
