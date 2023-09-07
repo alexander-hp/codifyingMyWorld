@@ -1,86 +1,61 @@
 import {
   Component,
-  OnDestroy,
-  OnInit,
-  HostListener,
-  Renderer2,
-  ViewChild,
   ElementRef,
+  HostListener,
+  ViewChild,
+  OnDestroy,
 } from '@angular/core';
 
 declare let $: any;
 
-// ?Listeners y decoradores
 @Component({
   selector: 'app-dashboard',
   templateUrl: './dashboard.component.html',
   styleUrls: ['./dashboard.component.css'],
 })
-@HostListener('document:mousemove', [`$event`])
-export class DashboardComponent implements OnInit, OnDestroy {
+export class DashboardComponent implements OnDestroy {
   @ViewChild('myModal') myModal: ElementRef;
+  listeningMouse: boolean;
   idTimeOut;
+  idSetInterval;
   checador;
   saliendo: boolean = false;
-  progressValue: number;
-  idSetInterval;
-  globalListenFunc: Function;
-  listeningMouse: boolean;
+  progressValue;
 
-  constructor(private renderer: Renderer2) {
-    let posicionX, nuevaPoscX, posicionY, nuevaPoscY;
+  @HostListener('document:mousemove', ['$event'])
+  onMouseMove(event: MouseEvent) {
+    // console.log('mouse move', event);
+    let posicionX, posicionY, nuevaPosicionY, nuevaPosicionX;
+    this.listeningMouse = true;
 
-    // ?Escuchando movimiento de mouse
-    this.globalListenFunc = this.renderer.listen(
-      'document',
-      'mousemove',
-      (e: MouseEvent) => {
-        this.listeningMouse = true;
-        nuevaPoscX = e.clientX;
-        nuevaPoscY = e.clientY;
-        console.log(
-          'Nueva Posicion {X: ' + nuevaPoscX + ', Y: ' + nuevaPoscY + '}'
-        );
+    // ? Variables de posicion actual del mouse
+    nuevaPosicionX = event.clientX;
+    nuevaPosicionY = event.clientY;
 
-        if (
-          this.listeningMouse === true &&
-          (nuevaPoscX !== posicionX || nuevaPoscY !== posicionY)
-        ) {
-          clearTimeout(this.checador);
-          this.checador = setTimeout(() => {
-            console.log('Mouse inactivo');
-            if (this.saliendo == false) {
-              this.decrementando();
-            }
-          }, 2000);
-        }
-
-        posicionX = e.clientX;
-        posicionY = e.clientY;
-
-        // console.log( 'Antigua Posicion {X: ' + posicionX + ', Y: ' + posicionY + '}');
-      }
+    console.log(
+      'Nueva posicion {X: ' + nuevaPosicionX + ', Y: ' + nuevaPosicionY + '}'
     );
+
+    if (
+      this.listeningMouse &&
+      (nuevaPosicionX !== posicionX || nuevaPosicionY !== posicionY)
+    ) {
+      console.log('Movio el mouse');
+      clearTimeout(this.checador);
+      this.checador = setTimeout(() => {
+        console.log('Mouse inactivo');
+        // ? Mostrando modal de logout
+        if (this.saliendo == false) {
+          this.decrementando();
+        }
+      }, 3e3);
+    }
+
+    posicionX = event.clientX;
+    posicionY = event.clientY;
   }
 
-  ngOnInit(): void {
-    // TODO Ejemplo de SetTimeoutConteo
-    // this.conteo();
-  }
-
-  reiniciandoConteo(): any {
-    console.log('Reiniciando Conteo');
-    clearTimeout(this.idTimeOut);
-    this.conteo();
-  }
-
-  conteo() {
-    this.idTimeOut = setTimeout(() => {
-      console.log('Se acabo el tiempo');
-    }, 3000);
-  }
-
-  decrementando() {
+  decrementando(): void {
     this.saliendo = true;
     this.progressValue = 100;
     $(this.myModal.nativeElement).modal('show');
@@ -90,22 +65,22 @@ export class DashboardComponent implements OnInit, OnDestroy {
         clearInterval(this.idSetInterval);
         $(this.myModal.nativeElement).modal('hide');
         this.progressValue = 0;
-        alert('Ya se salio');
+        alert('Ya se salio, Godbye!');
       }
     }, 1000);
   }
 
-  mantenerSesion() {
+  mantenerSesion(): void {
     clearInterval(this.idSetInterval);
     this.saliendo = false;
     $(this.myModal.nativeElement).modal('hide');
   }
 
-  ngOnDestroy(): void {
+  ngOnDestroy() {
     this.listeningMouse = false;
     clearInterval(this.idSetInterval);
     clearInterval(this.idTimeOut);
     clearTimeout(this.checador);
-    this.globalListenFunc();
+    this.onMouseMove = null;
   }
 }
